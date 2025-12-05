@@ -1,0 +1,41 @@
+from pathlib import Path
+from typing import Final
+
+DEFAULT_CACHE_DIR: Final[Path] = Path("~/.cache/e1jax")
+
+TOKENS: Final[dict[str, int]] = {
+    "<pad>": 0,
+    "<bos>": 1,
+    "<eos>": 2,
+    "<bos_glm>": 3,
+    "<eos_span>": 4,
+    "?": 5,
+    "1": 6,
+    "2": 7,
+    "A": 8,
+    "B": 9,
+    "C": 10,
+    "D": 11,
+    "E": 12,
+    "F": 13,
+    "G": 14,
+    "H": 15,
+    "I": 16,
+    "J": 17,
+    "K": 18,
+    "L": 19,
+    "M": 20,
+    "N": 21,
+    "O": 22,
+    "P": 23,
+    "Q": 24,
+    "R": 25,
+    "S": 26,
+    "T": 27,
+    "U": 28,
+    "V": 29,
+    "W": 30,
+    "X": 31,
+    "Y": 32,
+    "Z": 33,
+}

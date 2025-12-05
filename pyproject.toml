@@ -1,10 +1,36 @@
 [project]
-name = "e1-jax"
+name = "e1jax"
 version = "0.1.0"
 description = "An implementation of the E1 protein language model family with Jax/Equinox."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "beartype>=0.22.8",
+    "einops>=0.8.1",
+    "equinox>=0.13.2",
+    "huggingface-hub>=1.1.7",
+    "jax>=0.6.2",
+    "loguru>=0.7.3",
+    "safetensors>=0.7.0",
+    "tokenizers>=0.22.1",
+    "torch>=2.9.1",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = [
+    "I", # isort
+]
+extend-ignore = [
+    "F722", # https://docs.kidger.site/jaxtyping/faq/
+]
 
 [dependency-groups]
 dev = [
