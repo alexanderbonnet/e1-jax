@@ -2,6 +2,10 @@ name: Reusable CI
 
 on:
   workflow_call:
+    inputs:
+      directory:
+        required: true
+        type: string
 
 jobs:
   lint-type-test:
@@ -24,13 +28,13 @@ jobs:
         run: uv sync --locked --all-extras --dev
 
       - name: Lint
-        run: uv run ruff check esmjax tests
+        run: uv run ruff check ${{ inputs.directory }} tests
 
       - name: Check formatting
-        run: uv run ruff format --check esmjax tests
+        run: uv run ruff format --check ${{ inputs.directory }} tests
 
       - name: Type check
-        run: uv run ty check esmjax tests
+        run: uv run ty check ${{ inputs.directory }} tests
 
       - name: Run tests
         run: uv run pytest tests

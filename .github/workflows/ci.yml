@@ -8,3 +8,5 @@ name: CI
 jobs:
   call-reusable-ci:
     uses: ./.github/workflows/reusable-ci.yml
+    with:
+      directory: "e1jax"
