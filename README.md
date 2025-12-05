@@ -19,7 +19,7 @@ pad_length = 10
 tokenized = tokenizer.tokenize(seq)
 tokenized = tokenizer.pad_and_mask(tokenized, pad_length=pad_length)
 
-model = E1.from_pretrained("E1-300m", force_download=True)
+model = E1.from_pretrained("E1-300m")
 
 logits, embeddings = model(**tokenized._asdict())
 
