@@ -227,7 +227,7 @@ wheels = [
 ]
 
 [[package]]
-name = "e1-jax"
+name = "e1jax"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
