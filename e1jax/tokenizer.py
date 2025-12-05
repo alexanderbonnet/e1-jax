@@ -1,4 +1,4 @@
-from typing import Final
+from typing import Final, NamedTuple
 
 import jax.numpy as jnp
 from beartype import beartype
@@ -42,22 +42,28 @@ TOKENS: Final[dict[str, int]] = {
 }
 
 
+class Tokenized(NamedTuple):
+    tokens: Int[Array, " n"]
+    sequence_indexes: Int[Array, " n"]
+    global_indexes: Int[Array, " n"]
+    sequence_ids: Int[Array, " n"]
+    mask_pad: Bool[Array, " n"]
+
+
 @jaxtyped(typechecker=beartype)
-def tokenize(sequence: str) -> Int[Array, " n"]:
-    tokens = (
-        [TOKENS["<cls>"]] + [TOKENS.get(char, TOKENS["X"]) for char in sequence] + [TOKENS["<eos>"]]
+def tokenize(sequence: str) -> Tokenized:
+    tokens = jnp.array(
+        [TOKENS["<bos>"], TOKENS["1"]]
+        + [TOKENS.get(char, TOKENS["X"]) for char in sequence]
+        + [TOKENS["2"], TOKENS["<eos>"]],
+        dtype=jnp.int32,
     )
-    return jnp.array(tokens, dtype=jnp.int32)
-
-
-@jaxtyped(typechecker=beartype)
-def pad_and_mask(
-    tokens: Int[Array, " n"], pad_length: int = 0
-) -> tuple[Int[Array, " m"], Bool[Array, " m"]]:
-    if pad_length is None:
-        pad_length = 0
-
-    mask = jnp.array([True] * tokens.shape[0] + [False] * pad_length, dtype=jnp.bool_)
-    tokens = jnp.concat((tokens, jnp.zeros(pad_length, dtype=tokens.dtype)), axis=0)
-
-    return tokens, mask
+    n = tokens.shape[0]
+    tokenized = Tokenized(
+        tokens=tokens,
+        sequence_indexes=jnp.arange(n, dtype=jnp.int32),
+        global_indexes=jnp.arange(n, dtype=jnp.int32),
+        sequence_ids=jnp.array([0] * n, dtype=jnp.int32),
+        mask_pad=jnp.array([True] * n, dtype=jnp.bool),
+    )
+    return tokenized
