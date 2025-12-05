@@ -253,7 +253,6 @@ class E1(eqx.Module):
     ) -> tuple[Float[Array, " n 34"], Float[Array, " n dim"]]:
         emb = jax.vmap(self.token_embed)(tokens) + jax.vmap(self.sequence_embed)(sequence_ids)
         for layer in self.layers:
-            print(emb[:, :5])
             emb = layer(emb, sequence_indexes, global_indexes, sequence_ids, mask_pad)
         emb = jax.vmap(self.norm)(emb)
         return self.mlm_head(emb), emb
