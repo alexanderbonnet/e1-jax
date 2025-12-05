@@ -24,8 +24,8 @@ MODEL_HYPERPARAMS: Final[dict[str, dict[str, int]]] = {
 }
 
 
-def max_neg_value(array: Float[Array, "..."]) -> Float[Array, "..."]:
-    return jnp.finfo(array.dtype).min
+def max_neg_value(array: Float[Array, "..."]) -> float:
+    return float(jnp.finfo(array.dtype).min)
 
 
 @jaxtyped(typechecker=beartype)
@@ -64,7 +64,7 @@ class FeedForward(eqx.Module):
     linear_b: nn.Linear
     linear_out: nn.Linear
 
-    def __init__(self, dim: int, intermediate_dim: int, *, key=PRNGKeyArray) -> None:
+    def __init__(self, dim: int, intermediate_dim: int, *, key: PRNGKeyArray) -> None:
         key1, key2, key3 = jax.random.split(key, 3)
 
         self.linear_a = nn.Linear(dim, intermediate_dim, use_bias=False, key=key1)
