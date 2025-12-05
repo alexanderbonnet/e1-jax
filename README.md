@@ -14,14 +14,14 @@ The implementation is compatible with `equinox.filter_{vmap, jit}` for batched a
 The model can be one of `E1-150m`, `E1-300m`, `E1-600m`.
 
 ```python
-from e1jax import E1, tokenizer
+from e1jax import e1, tokenizer
 
 seq = "AAAAA?C"
 pad_length = 10
 tokenized = tokenizer.tokenize(seq)
 tokenized = tokenizer.pad_and_mask(tokenized, pad_length=pad_length)
 
-model = E1.from_pretrained("E1-300m")
+model = e1.E1.from_pretrained("E1-300m")
 
 logits, embeddings = model(**tokenized._asdict())
 
