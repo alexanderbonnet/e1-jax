@@ -33,9 +33,9 @@ def gelu(x: Float[Array, " ..."]) -> Float[Array, " ..."]:
 
 @jaxtyped(typechecker=beartype)
 def fixed_pos_embedding(
-    n: int, dim: int, base: int = 10_000
+    n: int, dim: int, theta: int
 ) -> tuple[Float[Array, " n dim"], Float[Array, " n dim"]]:
-    inv_freq = 1.0 / (base ** (jnp.arange(0, dim, 2) / dim))
+    inv_freq = 1.0 / (theta ** (jnp.arange(0, dim, 2) / dim))
     frequencies = jnp.einsum("i,j->ij", jnp.arange(n), inv_freq)
     emb = jnp.concatenate([frequencies, frequencies], axis=-1)
     return jnp.sin(emb), jnp.cos(emb)
@@ -137,7 +137,7 @@ class MultiHeadAttention(eqx.Module):
 
         query, key, value = map(lambda x: clip_and_reshape(x), (query, key, value))
 
-        sin, cos = fixed_pos_embedding(n=emb.shape[0], dim=self.head_dim, base=self.rope_theta)
+        sin, cos = fixed_pos_embedding(n=emb.shape[0], dim=self.head_dim, theta=self.rope_theta)
 
         attention_mask_pad = jnp.einsum("i,j->ij", mask_pad, mask_pad)
         if self.layer_type == "within_seq":
