@@ -10,6 +10,7 @@ dependencies = []
 dev = [
     "ipykernel>=7.1.0",
     "pre-commit>=4.5.0",
+    "pytest>=9.0.1",
     "ruff>=0.14.8",
     "ty>=0.0.1a31",
 ]
