@@ -8,11 +8,11 @@ from e1jax import _constants
 
 
 class Tokenized(NamedTuple):
-    tokens: Int[Array, " n"]
-    sequence_indexes: Int[Array, " n"]
-    global_indexes: Int[Array, " n"]
-    sequence_ids: Int[Array, " n"]
-    mask_pad: Bool[Array, " n"]
+    tokens: Int[Array, "... n"]
+    sequence_indexes: Int[Array, "... n"]
+    global_indexes: Int[Array, "... n"]
+    sequence_ids: Int[Array, "... n"]
+    mask_pad: Bool[Array, "... n"]
 
 
 @jaxtyped(typechecker=beartype)
