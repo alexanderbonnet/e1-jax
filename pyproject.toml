@@ -1,5 +1,5 @@
 [project]
-name = "e1-jax"
+name = "e1jax"
 version = "0.1.0"
 description = "An implementation of the E1 protein language model family with Jax/Equinox."
 readme = "README.md"
