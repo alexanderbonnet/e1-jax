@@ -11,6 +11,8 @@ Currently, only **single sequence** inference is supported.
 
 The implementation is compatible with `equinox.filter_{vmap, jit}` for batched and jitted inference.
 
+The model can be one of `E1-150m`, `E1-300m`, `E1-600m`.
+
 ```python
 from e1jax import E1, tokenizer
 
