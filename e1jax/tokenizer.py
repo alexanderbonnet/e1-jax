@@ -32,3 +32,23 @@ def tokenize(sequence: str) -> Tokenized:
         mask_pad=jnp.array([True] * n, dtype=jnp.bool),
     )
     return tokenized
+
+
+@jaxtyped(typechecker=beartype)
+def pad_and_mask(tokenized: Tokenized, pad_length: int | None) -> Tokenized:
+    if pad_length is None:
+        return tokenized
+
+    mask_pad = jnp.array([False] * pad_length, dtype=jnp.bool)
+    tokens_pad = jnp.array([_constants.TOKENS["<pad>"]] * pad_length, dtype=jnp.int32)
+    sequence_indexes_pad = jnp.zeros([pad_length], dtype=jnp.int32)
+    global_indexes_pad = jnp.zeros([pad_length], dtype=jnp.int32)
+    sequence_ids_pad = jnp.zeros([pad_length], dtype=jnp.int32)
+    padded_tokenized = Tokenized(
+        tokens=jnp.concatenate([tokenized.tokens, tokens_pad]),
+        sequence_indexes=jnp.concatenate([tokenized.sequence_indexes, sequence_indexes_pad]),
+        global_indexes=jnp.concatenate([tokenized.global_indexes, global_indexes_pad]),
+        sequence_ids=jnp.concatenate([tokenized.sequence_ids, sequence_ids_pad]),
+        mask_pad=jnp.concatenate([tokenized.mask_pad, mask_pad]),
+    )
+    return padded_tokenized
