@@ -156,9 +156,9 @@ class MultiHeadAttention(eqx.Module):
         attention = jnp.einsum("hik,hjk->hij", query, key) / jnp.sqrt(self.head_dim)
         attention = jnp.where(attention_mask[None, :, :], attention, max_neg_value(attention))
 
-        attention = jax.nn.softmax(attention, axis=-1)
+        attention = jax.nn.softmax(attention.astype(jnp.float32), axis=-1)
 
-        out = jnp.einsum("hik,hkj->hij", attention, value)
+        out = jnp.einsum("hik,hkj->hij", attention.astype(value.dtype), value)
         out = einops.rearrange(out, "h n d -> n (h d)")
         out = jax.vmap(self.to_out)(out)
         return out
