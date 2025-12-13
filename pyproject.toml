@@ -1,6 +1,6 @@
 [project]
 name = "e1jax"
-version = "0.1.0"
+version = "0.1.0-dev.0"
 description = "An implementation of the E1 protein language model family with Jax/Equinox."
 readme = "README.md"
 requires-python = ">=3.10"
