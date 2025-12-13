@@ -1,7 +1,7 @@
 # e1-jax
 
-A minimal implementation (meant for inference only) of the [E1 protein language model](https://www.profluent.bio/showcase/e1) family with Jax/Equinox.
-Logits and embeddings were matched against the [original repository](https://github.com/Profluent-AI/E1).
+A minimal implementation of the [E1 protein language model](https://www.profluent.bio/showcase/e1) family with Jax/Equinox.
+Logits and embeddings match those given by [authors repository](https://github.com/Profluent-AI/E1).
 
 Dependencies are managed with [uv](https://docs.astral.sh/uv/). To install them, run `uv sync`.
 
