@@ -8,7 +8,6 @@ jobs:
     uses: ./.github/workflows/reusable-ci.yml
     with:
       directory: "e1jax"
-
   publish:
     runs-on: ubuntu-latest
     environment:
@@ -114,3 +113,24 @@ jobs:
           if [ "${{ steps.validate.outputs.mismatch }}" == "true" ]; then
             echo "Reason: Version mismatch between tag and pyproject.toml"
           fi
+      - name: Cleanup on any failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "Build/test/publish failed - cleaning up release and tag: $TAG_NAME"
+
+          # Delete the GitHub release if it exists
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Deleting release $TAG_NAME"
+            gh release delete "$TAG_NAME" --yes
+          else
+            echo "No release found for $TAG_NAME"
+          fi
+
+          # Delete the tag
+          echo "Deleting tag $TAG_NAME"
+          git push --delete origin "$TAG_NAME" || echo "Failed to delete tag (may not exist remotely)"
+
+          echo "Cleanup completed"
