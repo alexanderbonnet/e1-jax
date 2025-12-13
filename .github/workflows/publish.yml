@@ -1,14 +1,11 @@
 name: "Publish"
-
 on:
   push:
     tags:
       - v*
-
 jobs:
   call-reusable-ci:
     uses: ./.github/workflows/reusable-ci.yml
-
   publish:
     runs-on: ubuntu-latest
     environment:
@@ -19,7 +16,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
       - name: Validate version tag
         id: validate
         run: |
@@ -30,6 +26,27 @@ jobs:
           # Extract version from pyproject.toml
           PYPROJECT_VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
           echo "pyproject_version=$PYPROJECT_VERSION" >> $GITHUB_OUTPUT
+
+          # Validate dev version format if it's a dev release
+          if [[ "$TAG_VERSION" == *"-dev."* ]]; then
+            echo "Detected dev version, validating format..."
+            
+            # Pattern: major.minor.patch-dev.major.minor.patch
+            if ! [[ "$TAG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-dev\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Invalid dev version format!"
+              echo "Dev versions must follow: major.minor.patch-dev.major.minor.patch"
+              echo "Example: 1.2.3-dev.1.2.3"
+              echo "Got: $TAG_VERSION"
+              echo "invalid_format=true" >> $GITHUB_OUTPUT
+              exit 1
+            else
+              echo "Dev version format is valid: $TAG_VERSION"
+              echo "invalid_format=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Not a dev version, skipping dev format validation"
+            echo "invalid_format=false" >> $GITHUB_OUTPUT
+          fi
 
           # Compare versions
           if [ "$TAG_VERSION" != "$PYPROJECT_VERSION" ]; then
@@ -42,34 +59,27 @@ jobs:
             echo "Versions match: $TAG_VERSION"
             echo "mismatch=false" >> $GITHUB_OUTPUT
           fi
-
       - name: Install uv
         if: success()
         uses: astral-sh/setup-uv@v7
-
       - name: Install Python 3.13
         if: success()
         run: uv python install 3.13
-
       - name: Build
         if: success()
         run: uv build
-
       # Check that basic features work and we didn't miss to include crucial files
       - name: Test (wheel)
         if: success()
         run: uv run --isolated --no-project --with dist/*.whl tests/test_dummy.py
-
       - name: Test (source distribution)
         if: success()
         run: uv run --isolated --no-project --with dist/*.tar.gz tests/test_dummy.py
-
       - name: Publish
         if: success()
         run: uv publish
-
-      - name: Cleanup on version mismatch
-        if: failure() && steps.validate.outputs.mismatch == 'true'
+      - name: Cleanup on validation failure
+        if: failure() && (steps.validate.outputs.mismatch == 'true' || steps.validate.outputs.invalid_format == 'true')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -91,3 +101,12 @@ jobs:
           echo "Cleanup completed"
           echo "Tag version was: ${{ steps.validate.outputs.tag_version }}"
           echo "pyproject.toml version was: ${{ steps.validate.outputs.pyproject_version }}"
+
+          if [ "${{ steps.validate.outputs.invalid_format }}" == "true" ]; then
+            echo "Reason: Invalid dev version format"
+            echo "Dev versions must follow: major.minor.patch-dev.major.minor.patch"
+          fi
+
+          if [ "${{ steps.validate.outputs.mismatch }}" == "true" ]; then
+            echo "Reason: Version mismatch between tag and pyproject.toml"
+          fi
