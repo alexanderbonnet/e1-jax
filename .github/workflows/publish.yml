@@ -30,12 +30,13 @@ jobs:
           # Validate dev version format if it's a dev release
           if [[ "$TAG_VERSION" == *"-dev."* ]]; then
             echo "Detected dev version, validating format..."
-            
-            # Pattern: major.minor.patch-dev.major.minor.patch
-            if ! [[ "$TAG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-dev\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+
+            # Pattern: major.minor.patch-dev.version (where version is 0-99)
+            if ! [[ "$TAG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-dev\.([0-9]|[1-9][0-9])$ ]]; then
               echo "Invalid dev version format!"
-              echo "Dev versions must follow: major.minor.patch-dev.major.minor.patch"
-              echo "Example: 1.2.3-dev.1.2.3"
+              echo "Dev versions must follow: major.minor.patch-dev.version"
+              echo "where version is a number from 0 to 99"
+              echo "Examples: 1.2.3-dev.1 or 1.2.3-dev.99"
               echo "Got: $TAG_VERSION"
               echo "invalid_format=true" >> $GITHUB_OUTPUT
               exit 1
@@ -104,7 +105,7 @@ jobs:
 
           if [ "${{ steps.validate.outputs.invalid_format }}" == "true" ]; then
             echo "Reason: Invalid dev version format"
-            echo "Dev versions must follow: major.minor.patch-dev.major.minor.patch"
+            echo "Dev versions must follow: major.minor.patch-dev.version"
           fi
 
           if [ "${{ steps.validate.outputs.mismatch }}" == "true" ]; then
