@@ -1,0 +1,136 @@
+name: "Publish"
+on:
+  push:
+    tags:
+      - v*
+jobs:
+  call-reusable-ci:
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      directory: "e1jax"
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      id-token: write
+      contents: write # Changed to 'write' to allow deleting releases and tags
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Validate version tag
+        id: validate
+        run: |
+          # Get the tag version (remove leading 'v')
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "tag_version=$TAG_VERSION" >> $GITHUB_OUTPUT
+
+          # Extract version from pyproject.toml
+          PYPROJECT_VERSION=$(grep -m 1 '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "pyproject_version=$PYPROJECT_VERSION" >> $GITHUB_OUTPUT
+
+          # Validate dev version format if it's a dev release
+          if [[ "$TAG_VERSION" == *"-dev."* ]]; then
+            echo "Detected dev version, validating format..."
+
+            # Pattern: major.minor.patch-dev.version (where version is 0-99)
+            if ! [[ "$TAG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-dev\.([0-9]|[1-9][0-9])$ ]]; then
+              echo "Invalid dev version format!"
+              echo "Dev versions must follow: major.minor.patch-dev.version"
+              echo "where version is a number from 0 to 99"
+              echo "Examples: 1.2.3-dev.1 or 1.2.3-dev.99"
+              echo "Got: $TAG_VERSION"
+              echo "invalid_format=true" >> $GITHUB_OUTPUT
+              exit 1
+            else
+              echo "Dev version format is valid: $TAG_VERSION"
+              echo "invalid_format=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Not a dev version, skipping dev format validation"
+            echo "invalid_format=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Compare versions
+          if [ "$TAG_VERSION" != "$PYPROJECT_VERSION" ]; then
+            echo "Version mismatch!"
+            echo "Tag version: $TAG_VERSION"
+            echo "pyproject.toml version: $PYPROJECT_VERSION"
+            echo "mismatch=true" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "Versions match: $TAG_VERSION"
+            echo "mismatch=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Install uv
+        if: success()
+        uses: astral-sh/setup-uv@v7
+      - name: Install Python 3.13
+        if: success()
+        run: uv python install 3.13
+      - name: Build
+        if: success()
+        run: uv build
+      # Check that basic features work and we didn't miss to include crucial files
+      - name: Test (wheel)
+        if: success()
+        run: uv run --isolated --no-project --with dist/*.whl tests/test_model.py
+      - name: Test (source distribution)
+        if: success()
+        run: uv run --isolated --no-project --with dist/*.tar.gz tests/test_model.py
+      - name: Publish
+        if: success()
+        run: uv publish
+      - name: Cleanup on validation failure
+        if: failure() && (steps.validate.outputs.mismatch == 'true' || steps.validate.outputs.invalid_format == 'true')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "Cleaning up release and tag: $TAG_NAME"
+
+          # Delete the GitHub release if it exists
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Deleting release $TAG_NAME"
+            gh release delete "$TAG_NAME" --yes
+          else
+            echo "No release found for $TAG_NAME"
+          fi
+
+          # Delete the tag
+          echo "Deleting tag $TAG_NAME"
+          git push --delete origin "$TAG_NAME" || echo "Failed to delete tag (may not exist remotely)"
+
+          echo "Cleanup completed"
+          echo "Tag version was: ${{ steps.validate.outputs.tag_version }}"
+          echo "pyproject.toml version was: ${{ steps.validate.outputs.pyproject_version }}"
+
+          if [ "${{ steps.validate.outputs.invalid_format }}" == "true" ]; then
+            echo "Reason: Invalid dev version format"
+            echo "Dev versions must follow: major.minor.patch-dev.version"
+          fi
+
+          if [ "${{ steps.validate.outputs.mismatch }}" == "true" ]; then
+            echo "Reason: Version mismatch between tag and pyproject.toml"
+          fi
+      - name: Cleanup on any failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "Build/test/publish failed - cleaning up release and tag: $TAG_NAME"
+
+          # Delete the GitHub release if it exists
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Deleting release $TAG_NAME"
+            gh release delete "$TAG_NAME" --yes
+          else
+            echo "No release found for $TAG_NAME"
+          fi
+
+          # Delete the tag
+          echo "Deleting tag $TAG_NAME"
+          git push --delete origin "$TAG_NAME" || echo "Failed to delete tag (may not exist remotely)"
+
+          echo "Cleanup completed"

@@ -7,6 +7,14 @@ Dependencies are managed with [uv](https://docs.astral.sh/uv/). To install them,
 
 Currently, only **single sequence** inference is supported.
 
+## Installation
+
+Requires Python 3.10+.
+
+```bash
+pip install e1jax
+```
+
 ## Example
 
 The implementation is compatible with `equinox.filter_{vmap, jit}` for batched and jitted inference.
