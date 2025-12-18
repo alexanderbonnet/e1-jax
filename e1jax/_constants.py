@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Final
 
-DEFAULT_CACHE_DIR: Final[Path] = Path("~/.cache/e1jax")
+DEFAULT_CACHE_DIR: Final[Path] = Path("~/.cache/e1jax").expanduser().resolve()
 
 TOKENS: Final[dict[str, int]] = {
     "<pad>": 0,
